@@ -106,7 +106,10 @@ try{
     if(!findUserData){
       throw { success: false, message: "User is not registered." };
     }
-  const otp = Math.floor(100000 + Math.random() * 900000)
+
+    //Math.floor(x + (y - x) * Math.random()); range=(x, y)
+    
+  const otp = Math.floor(100000 + Math.random() * 900000) 
   console.log("otp", otp);
 
     mailService("forgotLinkMail")(req.body.email , {
