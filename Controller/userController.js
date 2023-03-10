@@ -1,5 +1,6 @@
 const userService = require('../Services/userService')
 const commonService = require('../Services/commonService')
+const bcrypt = require('bcrypt');
 const mongo = require('mongodb');
 const mailService = require('../MailTemplate/MailService')
 var ObjectID = mongo.ObjectID;
@@ -11,22 +12,22 @@ exports.Register = async(req , res, next) =>{
 
 try{
     if (!req.body.email) {
-        throw { success: false, message: "Email are Required", response: {} };
+        throw { success: false, message: "Email are Required.", response: {} };
       }
       if (!req.body.password) {
-        throw { success: false, message: "Password is Required", response: {} };
+        throw { success: false, message: "Password is Required.", response: {} };
       }
       if (!req.body.name) {
-        throw { success: false, message: "name are Required", response: {} };
+        throw { success: false, message: "name are Required.", response: {} };
       }
       if (req.body.password != req.body.cpassword ) {
-        throw { success: false, message: "Password is Required", response: {} };
+        throw { success: false, message: "Password is not matched.", response: {} };
       }
       
       const findUserData = await userService.findByEmail({...req.body})
       console.log("findUserData", findUserData);
 
-      if(findUserData.email === req.body.email){
+      if(findUserData){
         throw { success: false, message: "Email already registered." };
       }
 
@@ -34,7 +35,7 @@ try{
 
       return res.send({
         success: true,
-        message: "Successfully Registered",
+        message: "Successfully Registered.",
         response: registerDataSave,
       });
 }catch (error ){
@@ -61,10 +62,25 @@ try{
       if(!findUserData){
         throw { success: false, message: "User is not registered." };
       }
-      const isPasswordMatch = await findUserData.comparePassword(req.body.password);
-    if (!isPasswordMatch) {
-      throw { success: false, message: "Password Not Matched" };
-    }
+    //   const saltRounds = 10;
+    //  bcrypt.hash(req.body.password, saltRounds,async function(err, hash) {
+    //   console.log("hash",hash);
+    //   req.body.password = hash ;
+    //   const isPasswordMatch = await findUserData.comparePassword(req.body.password);
+    //   console.log("req.body.password", req.body.password);
+    // if (!isPasswordMatch) {
+    //   throw { success: false, message: "Password Not Matched" };
+    // }
+    
+    // });
+
+    const isPasswordMatch = await findUserData.comparePassword(req.body.password);
+    console.log("req.body.password", isPasswordMatch);
+  if (!isPasswordMatch) {
+    throw { success: false, message: "Password Not Matched" };
+  }
+    
+
 
     const accessToken = await commonService.createUserAccessToken({
         _id: findUserData._id,
@@ -106,10 +122,7 @@ try{
     if(!findUserData){
       throw { success: false, message: "User is not registered." };
     }
-
-    //Math.floor(x + (y - x) * Math.random()); range=(x, y)
-    
-  const otp = Math.floor(100000 + Math.random() * 900000) 
+  const otp = Math.floor(100000 + Math.random() * 900000)
   console.log("otp", otp);
 
     mailService("forgotLinkMail")(req.body.email , {
